@@ -1,3 +1,39 @@
+/**
+ * SourceView 组件 - 书源视图组件
+ * 
+ * 功能概述：
+ * 1. 显示书源列表，支持按分组分类显示
+ * 2. 提供搜索功能，支持按书源名称筛选
+ * 3. 实现批量管理模式，支持全选、置顶、显示/隐藏等操作
+ * 4. 集成侧边栏导航，支持分组间的快速跳转
+ * 5. 提供书源编辑、置顶、搜索、显示/隐藏等右键菜单功能
+ * 6. 支持长按进入批量管理模式，拖拽排序分组
+ * 
+ * 设计特点：
+ * 1. 分层布局：使用Stack实现批量工具栏、内容区域和底部操作栏的叠加
+ * 2. 状态管理：管理选中状态、加载状态、错误状态等复杂状态
+ * 3. 动画效果：批量模式切换时的平滑动画效果
+ * 4. 数据分组：将书源按分组分类，提高浏览效率
+ * 5. 主题集成：支持动态主题颜色，应用于选中状态和UI元素
+ * 
+ * 使用场景：
+ * 1. 书源管理页面的主要内容区域
+ * 2. 需要批量操作书源的场景
+ * 3. 需要分组浏览和搜索书源的界面
+ * 
+ * 组件结构：
+ * - 批量工具栏：全选、计数、完成按钮
+ * - 侧边栏：分组导航，支持拖拽排序
+ * - 主列表：分组显示书源，支持右键菜单
+ * - 底部操作栏：置顶、显示/隐藏批量操作
+ * - 加载/错误状态：显示加载中、无数据等状态
+ * 
+ * 注意事项：
+ * 1. 需要正确处理批量模式的切换和状态同步
+ * 2. 分组拖拽排序需要更新数据库
+ * 3. 主题颜色需要动态应用到各个UI元素
+ */
+
 import dayjs from 'dayjs'
 import PaddingConstants from '../../common/constants/PaddingConstants'
 import { IconTitleVo } from '../../componetsmodel/IconTitleVo'
@@ -16,82 +52,258 @@ import { ThemeStorageKey } from '../../common/constants/Theme'
 
 @Component
 export default struct SourceView {
+  /**
+   * 顶部矩形高度
+   * @type {number}
+   * @default 0
+   * @description 从存储中读取的顶部矩形高度，用于布局计算
+   * @storagelink 使用@StorageLink装饰器实现与存储的双向绑定
+   */
   @StorageLink('topRectHeight') topRectHeight: number = 0
+  
+  /**
+   * 底部矩形高度
+   * @type {number}
+   * @default 0
+   * @description 从存储中读取的底部矩形高度，用于布局计算
+   * @storagelink 使用@StorageLink装饰器实现与存储的双向绑定
+   */
   @StorageLink('bottomRectHeight') bottomRectHeight: number = 0
+  
+  /**
+   * 标题数组
+   * @type {Array<string>}
+   * @default ['小说', '漫画', '有声书']
+   * @description 书源类型标题数组
+   */
   titleArray: Array<string> = ['小说', '漫画', '有声书']
+  
+  /**
+   * 索引
+   * @type {number}
+   * @default 0
+   * @description 当前视图索引（0:默认显示, 1:隐藏书源）
+   */
   index: number = 0
+  
+  /**
+   * 类型
+   * @type {number}
+   * @default 0
+   * @description 书源类型（0:小说, 1:漫画, 2:有声书）
+   */
   type: number = 0
+  
+  /**
+   * 搜索值
+   * @type {string}
+   * @description 搜索关键词，变化时触发getList方法
+   * @link @watch 使用@Link装饰器实现双向绑定，@Watch监听变化
+   */
   @Link @Watch('getList') searchValue: string
+  
+  /**
+   * 激活名称映射
+   * @type {Record<string, boolean>}
+   * @default {}
+   * @description 记录选中书源的状态映射
+   * @state 使用@State装饰器管理组件内部状态
+   */
   @State activeNameMap: Record<string, boolean> = {}
+  
+  /**
+   * 全选状态
+   * @type {boolean}
+   * @default false
+   * @description 标识是否全选
+   * @state 使用@State装饰器管理组件内部状态
+   */
   @State fullActive: boolean = false
+  
+  /**
+   * 分组列表
+   * @type {GroupPartList[]}
+   * @default []
+   * @description 按分组分类的书源列表
+   * @state 使用@State装饰器管理组件内部状态
+   */
   @State groupList: GroupPartList[] = []
+  
+  /**
+   * 书源列表
+   * @type {BookSourcePart[]}
+   * @default []
+   * @description 所有书源数据列表
+   * @state 使用@State装饰器管理组件内部状态
+   */
   @State sourceList: BookSourcePart[] = []
+  
+  /**
+   * 加载状态
+   * @type {boolean}
+   * @default true
+   * @description 标识是否正在加载数据
+   * @state 使用@State装饰器管理组件内部状态
+   */
   @State loading: boolean = true
+  
+  /**
+   * 错误文本
+   * @type {string}
+   * @default ''
+   * @description 错误提示文本
+   * @state 使用@State装饰器管理组件内部状态
+   */
   @State errorText: string = ''
+  
+  /**
+   * 批量模式状态
+   * @type {boolean}
+   * @description 标识是否处于批量管理模式
+   * @link 使用@Link装饰器实现与父组件的双向绑定
+   */
   @Link isBatch: boolean
+  
+  /**
+   * 显示右侧对话框映射
+   * @type {Record<string, boolean>}
+   * @default {}
+   * @description 记录每个书源右侧菜单的显示状态
+   * @state 使用@State装饰器管理组件内部状态
+   */
   @State showRightDialogMap: Record<string, boolean> = {}
+  
+  /**
+   * 当前索引
+   * @type {number}
+   * @default 0
+   * @description 当前选中的分组索引
+   * @state 使用@State装饰器管理组件内部状态
+   */
   @State currentIndex: number = 0
+  
+  /**
+   * 置顶切换状态
+   * @type {boolean}
+   * @default false
+   * @description 标识置顶/取消置顶的切换状态
+   * @state 使用@State装饰器管理组件内部状态
+   */
   @State topToggle: boolean = false
+  
+  /**
+   * 刷新计数
+   * @type {number}
+   * @description 刷新计数器，变化时触发getList方法
+   * @link @watch 使用@Link装饰器实现双向绑定，@Watch监听变化
+   */
   @Link @Watch('getList') refreshCount: number
+  
+  /**
+   * 关闭对话框回调
+   * @type {Function}
+   * @default () => {}
+   * @description 关闭对话框的回调函数
+   */
   closeDialog: () => void = () => {
   }
+  
+  /**
+   * 滚动控制器
+   * @type {Scroller}
+   * @description 控制侧边栏滚动的控制器
+   */
   private scroll: Scroller = new Scroller()
+  
+  /**
+   * 第二滚动控制器
+   * @type {Scroller}
+   * @description 控制主列表滚动的控制器
+   */
   private secondScroll = new Scroller()
-  // 主题颜色
+  
+  /**
+   * 主题配置
+   * @type {ThemeItem}
+   * @description 从存储中读取的主题配置
+   * @storageprop 使用@StorageProp装饰器从存储中读取数据
+   */
   @StorageProp(ThemeStorageKey.THEME) theme: ThemeItem = {} as ThemeItem
 
+  /**
+   * 组件即将显示时的生命周期回调
+   * @returns {void}
+   * @description 组件初始化，开始加载数据
+   */
   aboutToAppear() {
-    console.info('TagInfo', '当前下标： ' + this.index)
-    this.loading = true
-    this.getList()
+    console.info('TagInfo', '当前下标： ' + this.index) // 调试日志
+    this.loading = true // 设置加载状态
+    this.getList() // 获取数据
   }
 
+  /**
+   * 获取书源列表
+   * @returns {void}
+   * @description 从数据库获取书源数据，按类型和搜索关键词筛选
+   */
   getList() {
     BookSourceDao.flowSearch({
-      type: [0, 2, 1][this.type],
-      searchKey: this.searchValue,
-      showExplore: this.index === 0
+      type: [0, 2, 1][this.type], // 类型映射：0->0(小说), 1->2(漫画), 2->1(有声书)
+      searchKey: this.searchValue, // 搜索关键词
+      showExplore: this.index === 0 // 是否显示探索（默认显示）
     }).then(data => {
-      const bookSource = data ?? []
-      console.info('TagInfo', JSON.stringify(bookSource.slice(0, 3)))
-      this.sourceList = bookSource
-      this.getGroupList()
-      this.loading = false
-      console.info('TagInfo', '数量 ' + this.sourceList.length)
+      const bookSource = data ?? [] // 处理空数据
+      console.info('TagInfo', JSON.stringify(bookSource.slice(0, 3))) // 调试日志
+      this.sourceList = bookSource // 更新书源列表
+      this.getGroupList() // 分组处理
+      this.loading = false // 取消加载状态
+      console.info('TagInfo', '数量 ' + this.sourceList.length) // 调试日志
       if (!this.sourceList.length) {
-        this.errorText = `当前${this.titleArray[this.type]}还没有添加源`
+        this.errorText = `当前${this.titleArray[this.type]}还没有添加源` // 设置错误文本
       }
     })
   }
 
+  /**
+   * 获取分组列表
+   * @returns {void}
+   * @description 将书源按分组分类，构建分组列表
+   */
   getGroupList() {
-    const groupMap: Record<string, GroupPartList> = {};
+    const groupMap: Record<string, GroupPartList> = {}; // 分组映射
     this.sourceList.forEach((item: BookSourcePart) => {
-      const title = item.bookSourceGroup;
-      const bookSourceName = item.bookSourceName;
+      const title = item.bookSourceGroup; // 分组标题
+      const bookSourceName = item.bookSourceName; // 书源名称
       if (bookSourceName.indexOf(this.searchValue) === -1) {
-        return
+        return // 跳过不匹配搜索关键词的书源
       }
       if (!title) {
-        return
+        return // 跳过无分组的书源
       }
       // 如果groupMap中还没有这个group，则创建一个新的GroupList对象
       if (!groupMap[title]) {
-        groupMap[title] = { title: title, list: [] };
+        groupMap[title] = { title: title, list: [] }; // 创建新分组
       }
       // 向当前group的list中添加BookSource对象
-      groupMap[title].list.push(item);
+      groupMap[title].list.push(item); // 添加书源到分组
     })
-    this.groupList = Object.values(groupMap);
+    this.groupList = Object.values(groupMap); // 转换为数组
   }
 
+  /**
+   * 滚动变化动作
+   * @param {number} start - 起始索引
+   * @param {Boolean} flg - 标志位（true:侧边栏滚动, false:主列表滚动）
+   * @returns {void}
+   * @description 同步侧边栏和主列表的滚动位置
+   */
   scrollChangeAction(start: number, flg: Boolean) {
     if (this.currentIndex !== start) {
-      this.currentIndex = start;
+      this.currentIndex = start; // 更新当前索引
       if (!flg) {
-        this.scroll.scrollToIndex(start);
+        this.scroll.scrollToIndex(start); // 滚动侧边栏
       } else {
-        this.secondScroll.scrollToIndex(start);
+        this.secondScroll.scrollToIndex(start); // 滚动主列表
       }
     }
   }
