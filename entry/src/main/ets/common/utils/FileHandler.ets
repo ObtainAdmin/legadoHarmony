@@ -43,7 +43,7 @@ export class FileHandler {
    *   5. 复制文件到沙箱目录
    * 注意：文件名为中文时可能包含特殊字符，需要确保路径正确
    */
-  static CopyFile(srcUrl: string, currentIndex: number): void {
+  static CopyFile(srcUrl: string, currentIndex: number) {
     let file = fs.openSync(srcUrl, fs.OpenMode.READ_WRITE);
     let dstPath = filePath + '/' + file.name; // file.name:《幽影之冰》.txt
     let book: Books = {
@@ -90,7 +90,7 @@ export class FileHandler {
    * 优势：动态获取文件大小，避免预分配过大缓冲区
    * 注意：此方法适用于大文件，可以动态获取文件大小
    */
-  static async ReadJSONFile(srcUrl: string): Promise<string> {
+  static async ReadJSONFile(srcUrl: string) {
     try {
       let file = fs.openSync(srcUrl, fs.OpenMode.READ_WRITE);
       let stat = fs.statSync(file.path)
@@ -119,8 +119,8 @@ export class FileHandler {
    *   支持格式：序章、楔子、番外、第X章、第X回、第X话、第X节、第X卷、第X篇
    *   支持数字：中文数字、阿拉伯数字、大写数字
    */
-  static async readFile(readFileUrl: string): Promise<chaptersItem[]> {
-    let chapterNumber = 0;
+  static async readFile(readFileUrl: string) {
+    let chapterNumber = 0
     const chapters: chaptersItem[] = [];
     console.info('readFileUrl:' + readFileUrl)
     //const regex = /===第(.*?)章 (.*?)===/g;
@@ -167,7 +167,7 @@ export class FileHandler {
    *   4. 返回用户选择的文件路径
    * 注意：此方法提供通用的文件选择功能，可配置选择参数
    */
-  static async documentPickerFile(maxSelectNumber: number | undefined = undefined, fileSuffixFilters: Array<string>): Promise<Array<string>> {
+  static async documentPickerFile(maxSelectNumber: number | undefined = undefined, fileSuffixFilters: Array<string>) {
     // 尝试写一个通用的picker
     try {
       const documentSelectOptions = new picker.DocumentSelectOptions();
@@ -200,7 +200,7 @@ export class FileHandler {
    * 注意：此方法专门用于选择JSON文件，文件大小限制为40MB
    * 与documentPickerFile的区别：此方法专用于JSON文件，自动解析内容
    */
-  static async pickerFile(context: Context): Promise<any> {
+  static async pickerFile(context: Context) {
     try {
       const documentSelectOptions = new picker.DocumentSelectOptions();
       // 选择文档的最大数目（可选）
@@ -272,7 +272,7 @@ export class FileHandler {
    *   - READ_WRITE | CREATE: 读写模式，如果文件不存在则创建
    * 注意：此方法返回操作结果字符串，而非Promise
    */
-  static writeJsonFile(pathUrl: string, context: ArrayBuffer | string): string {
+  static writeJsonFile(pathUrl: string, context: ArrayBuffer | string) {
     console.info('TagInfo', '文件地址：' + pathUrl);
     try {
       // 创建文件，并且写入内容，若是存在则重写内容
@@ -304,7 +304,7 @@ export class FileHandler {
    * 注意：此操作不可逆，会永久删除文件
    * 安全考虑：删除前应确认文件是否重要
    */
-  static deleteJsonFile(pathUrl: string): string {
+  static deleteJsonFile(pathUrl: string) {
     try {
       fs.unlinkSync(pathUrl);
       return '删除成功'
