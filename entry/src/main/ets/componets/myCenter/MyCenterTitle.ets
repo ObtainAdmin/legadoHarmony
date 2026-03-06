@@ -329,3 +329,5 @@ export struct MyCenterTitle{
     }
     .padding({left: 20, right: 20, top: 12, bottom: 12})
     .height(46)
+  }
+}
