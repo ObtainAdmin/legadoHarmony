@@ -1,49 +1,108 @@
+/**
+ * LayoutMore 组件 - 布局更多设置对话框
+ * 
+ * 功能概述：
+ * 1. 提供阅读器布局的多种自定义设置选项
+ * 2. 支持边距调整、字体粗细选择、简繁体切换等设置
+ * 3. 使用滑块控件实现边距的精确调整
+ * 4. 提供按钮组实现字体样式的快速切换
+ * 5. 预留首行缩进功能的扩展接口
+ * 
+ * 设计特点：
+ * 1. 垂直布局：使用Column布局垂直排列不同设置项
+ * 2. 水平分组：每个设置项使用Row布局水平排列标签和控件
+ * 3. 响应式宽度：100%宽度适配不同屏幕尺寸
+ * 4. 固定高度：500px固定高度，确保对话框尺寸一致性
+ * 5. 控件多样：包含滑块、按钮等多种交互控件
+ * 
+ * 使用场景：
+ * 1. 阅读器页面中的布局设置对话框
+ * 2. 需要自定义阅读体验的场景
+ * 3. 字体、边距等视觉参数的调整界面
+ * 
+ * 组件结构：
+ * - 边距设置：滑块控件调整阅读器内边距
+ * - 字体设置：按钮组选择字体粗细和简繁体
+ * - 首行缩进：预留的开关控件（当前为注释状态）
+ * 
+ * 注意事项：
+ * 1. 边距滑块的范围和步长需要合理设置
+ * 2. 字体按钮的选中状态需要正确管理
+ * 3. 简繁体切换需要与文本渲染系统配合
+ */
+
 @Component
 export default struct LayoutMore {
+  /**
+   * 阅读器内边距
+   * @type {number}
+   * @description 控制阅读器内容区域的内边距大小
+   * @link 使用@Link装饰器实现与父组件的双向绑定
+   */
   @Link ReaderPadding: number
 
+  /**
+   * 构建对话框UI
+   * @returns {void}
+   * @description 构建布局设置对话框的UI结构
+   * 使用Column布局垂直排列三个设置区域
+   */
   build() {
     Column() {
+      /**
+       * 边距设置区域
+       * @description 使用滑块控件调整阅读器内边距
+       * 12-32px范围，4px步长，30x30滑块尺寸
+       */
       Row() {
-        Text("边距")
+        Text("边距") // 设置项标签
         Slider({
-          value: this.ReaderPadding,
-          max: 32,
-          min: 12,
-          step: 4,
-          style: SliderStyle.InSet
+          value: this.ReaderPadding, // 当前值
+          max: 32, // 最大值32px
+          min: 12, // 最小值12px
+          step: 4, // 步长4px
+          style: SliderStyle.InSet // 内嵌样式
         })
-          .selectedColor('rgba(0, 0, 0, 0.04)')
-          .blockSize({ width: 30, height: 30 })
-          .layoutWeight(1)
+          .selectedColor('rgba(0, 0, 0, 0.04)') // 选中区域颜色
+          .blockSize({ width: 30, height: 30 }) // 滑块尺寸30x30
+          .layoutWeight(1) // 占用剩余空间
           .onChange((value) => {
-            this.ReaderPadding = value
+            this.ReaderPadding = value // 更新边距值
           })
       }
-      .width("100%")
+      .width("100%") // 100%宽度
 
+      /**
+       * 字体设置区域
+       * @description 使用按钮组选择字体粗细和简繁体
+       * 包含5个按钮：细、中、粗、简体、繁体
+       */
       Row() {
-        Text("字体")
-        Button("细")
-        Button("中")
-        Button("粗")
+        Text("字体") // 设置项标签
+        Button("细") // 细体字体按钮
+        Button("中") // 中体字体按钮
+        Button("粗") // 粗体字体按钮
 
-        Button("简体")
-        Button("繁体")
+        Button("简体") // 简体中文按钮
+        Button("繁体") // 繁体中文按钮
       }
-      .width("100%")
+      .width("100%") // 100%宽度
 
+      /**
+       * 首行缩进设置区域
+       * @description 预留的首行缩进开关功能
+       * 当前为注释状态，可根据需要启用
+       */
       Row() {
-        Text("首行缩进")
-        // Toggle()
+        Text("首行缩进") // 设置项标签
+        // Toggle() // 开关控件（注释状态）
       }
-      .width("100%")
+      .width("100%") // 100%宽度
     }
-    .height(500)
+    .height(500) // 固定高度500px
     .padding({
       left: 20,
       right: 20
-    })
+    }) // 左右20px内边距
   }
 }
-
