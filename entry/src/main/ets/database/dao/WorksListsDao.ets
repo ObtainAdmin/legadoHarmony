@@ -1,3 +1,25 @@
+/**
+ * 书单数据访问对象 (Works Lists Data Access Object)
+ * 
+ * 功能说明：
+ * 1. 提供对works_lists表的完整CRUD操作
+ * 2. 管理用户创建的书单（作品列表）
+ * 3. 支持书单的搜索、过滤、排序和分页
+ * 4. 处理书单的置顶、创建时间等业务逻辑
+ * 
+ * 核心功能：
+ * - 书单表初始化和维护
+ * - 书单的增删改查操作
+ * - 书单搜索和过滤（按名称、描述、类型等）
+ * - 书单置顶管理
+ * - 批量操作支持
+ * 
+ * 使用场景：
+ * - 书单管理界面
+ * - 书单创建和编辑
+ * - 书单搜索和筛选
+ * - 书单置顶操作
+ */
 import DbUtil from '../../common/utils/DbUtil';
 import AppDatabaseUtil from '../AppDatabaseUtil';
 import { ToWorksLists, ToWorksListsDb, WorksLists, worksListsDb } from '../entities/WorksLists';
@@ -5,9 +27,14 @@ import { ColumnInfo } from '../types/ColumnInfo';
 import { WorksListsTypeSearchParams } from '../types/WorksListsType';
 
 /**
- * 书单db操作
+ * 书单DAO类
+ * 负责works_lists表的所有数据库操作
  */
 class WorksListsDao {
+  /**
+   * 表名常量
+   * @type {string}
+   */
   TABLE_NAME: string = 'works_lists'
 
   // 创建works_lists数据表

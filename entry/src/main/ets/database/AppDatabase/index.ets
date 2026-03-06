@@ -1,11 +1,70 @@
+/**
+ * 应用数据库配置 (Application Database Configuration)
+ * 
+ * 功能说明：
+ * 1. 定义整个应用的所有数据库表结构
+ * 2. 配置ORM实体映射关系
+ * 3. 提供数据库版本控制和迁移支持
+ * 
+ * 文件结构：
+ * - formatVersion: 配置文件格式版本
+ * - database: 数据库配置主体
+ *   - version: 数据库版本号
+ *   - identityHash: 数据库结构哈希值，用于验证结构一致性
+ *   - entities: 所有实体表定义数组
+ *   - views: 数据库视图定义（当前为空）
+ *   - setupQueries: 数据库初始化查询语句
+ * 
+ * 实体表说明：
+ * 1. books: 书籍信息表
+ * 2. book_groups: 书籍分组表
+ * 3. book_sources: 书源配置表
+ * 4. chapters: 章节信息表
+ * 5. replace_rules: 文本替换规则表
+ * 6. searchBooks: 搜索书籍结果表
+ * 7. search_keywords: 搜索关键词表
+ * 8. cookies: Cookie存储表
+ * 9. rssSources: RSS源配置表
+ * 10. bookmarks: 书签表
+ * 11. rssArticles: RSS文章表
+ * 12. rssReadRecords: RSS阅读记录表
+ * 13. rssStars: RSS收藏表
+ * 14. txtTocRules: 文本目录规则表
+ * 15. readRecord: 阅读记录表
+ * 16. httpTTS: HTTP文本转语音配置表
+ * 17. caches: 缓存表
+ * 18. ruleSubs: 规则订阅表
+ * 19. dictRules: 词典规则表
+ * 20. keyboardAssists: 键盘辅助表
+ * 21. servers: 服务器配置表
+ * 22. rss_sources_history: RSS源历史表
+ * 23. works_lists: 作品列表表
+ * 24. book_history: 书籍历史记录表
+ * 25. rss_source_group: RSS源分组表
+ * 
+ * 使用注意事项：
+ * 1. 修改此文件后需要更新identityHash
+ * 2. 新增表时需要同步更新对应的DAO和实体类
+ * 3. 字段变更需要考虑数据库迁移策略
+ */
 import { AppDataBaseType } from '../types/AppDatabaseType'
 
+/**
+ * 默认数据库配置导出
+ * 使用AppDataBaseType类型确保类型安全
+ */
 export default {
-  "formatVersion": 1,
+  "formatVersion": 1, // 配置文件格式版本
   "database": {
-    "version": 1,
-    "identityHash": "6e17b5366286b868f2912c12d6d8e467",
+    "version": 1, // 数据库版本号，用于迁移控制
+    "identityHash": "6e17b5366286b868f2912c12d6d8e467", // 数据库结构哈希，用于验证结构一致性
     "entities": [
+      /**
+       * 书籍信息表 (books)
+       * 存储用户书架中的所有书籍信息
+       * 主键：id (书籍ID)
+       * 索引：index_books_bookName_author (bookName, author) 唯一索引
+       */
       {
         "tableName": "books",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` ( `id` INTEGER NOT NULL, `bookUrl` TEXT, `toUrl` TEXT, `origin` TEXT, `originName` TEXT, `bookName` TEXT NOT NULL, `author` TEXT, `cover` TEXT, `customTag` TEXT, `coverUrl` TEXT, `customCoverUrl` TEXT, `intro` TEXT, `customIntro` TEXT, `charset` TEXT, `bookGroup` INTEGER NOT NULL DEFAULT 3, `latestChapterTitle` TEXT, `latestChapterTime` INTEGER NOT NULL DEFAULT 0, `lastCheckTime` INTEGER NOT NULL DEFAULT 0, `lastCheckCount` INTEGER NOT NULL DEFAULT 0, `totalChapterNum` INTEGER NOT NULL DEFAULT 0, `durChapterTitle` TEXT, `durChapterIndex` INTEGER NOT NULL DEFAULT 0, `durChapterPos` INTEGER NOT NULL DEFAULT 0, `durChapterTime` INTEGER NOT NULL DEFAULT 0, `wordCount` TEXT, `canUpdate` INTEGER NOT NULL DEFAULT 1, `sort` INTEGER NOT NULL DEFAULT 0, `originOrder` INTEGER NOT NULL DEFAULT 0, `syncTime` INTEGER NOT NULL DEFAULT 0, `bookType` INTEGER NOT NULL DEFAULT 0, `isTop` INTEGER NOT NULL DEFAULT 0, `createTime` INTEGER NOT NULL DEFAULT 0,`updateTime` INTEGER NOT NULL DEFAULT 0,`isJoin` INTEGER NOT NULL DEFAULT 1, `isLocalBook` INTEGER NOT NULL DEFAULT 0,PRIMARY KEY ( `id` ))",

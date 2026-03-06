@@ -2,6 +2,25 @@
  * @author 2008
  * @datetime 2024/7/24 21:16
  * @className: BookGroupsDao
+ * 
+ * 书籍分组数据访问对象 (Book Groups Data Access Object)
+ * 
+ * 功能说明：
+ * 1. 提供对book_groups表的完整CRUD操作
+ * 2. 管理书籍分组的创建、查询、更新、删除
+ * 3. 处理分组与书籍的关联关系
+ * 4. 支持分组显示状态、置顶状态等业务逻辑
+ * 
+ * 核心功能：
+ * - 分组表初始化和管理
+ * - 分组数据的增删改查
+ * - 分组与书籍的关联管理
+ * - 分组排序和显示控制
+ * 
+ * 使用场景：
+ * - 书架分组管理
+ * - 书籍分类展示
+ * - 分组设置和配置
  */
 import DbUtil from '../../common/utils/DbUtil';
 import AppDatabaseUtil from '../AppDatabaseUtil';
@@ -9,10 +28,26 @@ import { BookGroupDb, BookGroups, ToBookGroups, ToBookGroupsDb } from '../entiti
 import { BookGroupTypeParams } from '../types/BookGroupType';
 import { ColumnInfo } from '../types/ColumnInfo';
 
+/**
+ * 书籍分组DAO类
+ * 负责book_groups表的所有数据库操作
+ */
 class BookGroupsDao{
+  /**
+   * 表名常量
+   * @type {string}
+   */
   TABLE_NAME: string = 'book_groups'
 
-  // 创建books数据表
+  /**
+   * 初始化分组表
+   * @returns {Promise<void>}
+   * @description 
+   * 1. 获取表的创建SQL语句
+   * 2. 创建数据表
+   * 3. 检查并补全缺失字段
+   * 4. 初始化默认分组数据
+   */
   async initGroupTable() {
     try {
       const createSql = AppDatabaseUtil.getCreateSql(this.TABLE_NAME);
@@ -28,6 +63,19 @@ class BookGroupsDao{
 
   }
 
+  /**
+   * 查询分组列表
+   * @param {BookGroupTypeParams} [params] - 查询参数
+   * @returns {Promise<BookGroups[]>} 分组列表
+   * @description 
+   * 查询条件：
+   * 1. 按分组类型过滤（type参数）
+   * 2. 默认包含系统分组（groupType = 123）
+   * 排序规则：
+   * 1. 系统分组优先（isSystem DESC）
+   * 2. 置顶分组优先（isTop DESC）
+   * 3. 按排序号升序（sort ASC）
+   */
   async search(params?:BookGroupTypeParams) {
     const type = params?.type
     try {

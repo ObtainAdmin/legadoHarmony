@@ -1,3 +1,28 @@
+/**
+ * 书籍源数据访问对象 (Book Source Data Access Object)
+ * 
+ * 功能说明：
+ * 1. 提供对book_sources表的完整CRUD操作
+ * 2. 管理阅读应用的书源配置信息
+ * 3. 支持书源的搜索、过滤、排序和分页
+ * 4. 处理书源的启用/禁用状态管理
+ * 5. 支持书源分组和自定义排序
+ * 
+ * 核心功能：
+ * - 书源表初始化和维护
+ * - 书源的增删改查操作
+ * - 流式查询（轻量级字段查询）
+ * - 书源状态管理（启用/禁用、置顶、显示控制）
+ * - 书源搜索和过滤（按名称、分组、等级等）
+ * - 批量操作支持
+ * 
+ * 使用场景：
+ * - 书源管理界面
+ * - 书源导入导出
+ * - 书源搜索和筛选
+ * - 书源状态更新
+ * - 阅读时的书源选择
+ */
 import { ColumnInfo, ColumnType } from '../types/ColumnInfo';
 import { BookSource, BookSourceDb, ToBookSource, ToBookSourceDb, ToBookSourcePart } from '../entities/BookSource';
 import AppDatabaseUtil from '../AppDatabaseUtil' // 数据库表结构工具类

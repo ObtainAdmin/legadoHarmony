@@ -2,7 +2,27 @@
  * @author 2008
  * @datetime 2024/8/5 21:15
  * @className: BookHistory
- * 书籍浏览历史
+ * 
+ * 书籍浏览历史实体类 (Book History Entity)
+ * 
+ * 功能说明：
+ * 1. 定义书籍阅读历史的数据结构
+ * 2. 记录用户的阅读进度和阅读习惯
+ * 3. 提供继续阅读功能的基础数据支持
+ * 4. 管理阅读历史的基本属性和业务逻辑
+ * 
+ * 核心属性：
+ * - 书籍基本信息：名称、作者、URL、封面
+ * - 阅读进度：章节时间、章节索引、章节标题、章节内容
+ * - 书籍类型：小说、漫画、有声
+ * - 时间信息：创建时间、更新时间、最近阅读时间
+ * - 关联信息：源书籍ID、排序
+ * 
+ * 使用场景：
+ * - 继续阅读功能
+ * - 阅读历史查看
+ * - 阅读进度同步
+ * - 阅读习惯分析
  */
 @Observed
 export class BookHistory {
@@ -34,6 +54,11 @@ export class BookHistory {
   //更新时间
   updateTime?:number = 0
 
+  /**
+   * 构造函数
+   * @param {BookHistory} [bookHistory] - 可选的BookHistory对象，用于复制属性
+   * @description 支持从现有BookHistory对象复制属性值
+   */
   constructor(bookHistory?:BookHistory) {
     if (bookHistory) {
       this.id = bookHistory.id

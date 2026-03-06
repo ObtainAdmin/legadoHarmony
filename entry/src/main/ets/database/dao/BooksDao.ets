@@ -1,3 +1,27 @@
+/**
+ * 书籍数据访问对象 (Books Data Access Object)
+ * 
+ * 功能说明：
+ * 1. 提供对books表的完整CRUD操作
+ * 2. 管理用户书架中的所有书籍
+ * 3. 支持复杂的书籍查询和分页
+ * 4. 处理书籍分组、排序、搜索等业务逻辑
+ * 
+ * 核心功能：
+ * - 书籍表初始化和管理
+ * - 书籍的增删改查操作
+ * - 多条件查询和分页查询
+ * - 书籍分组管理
+ * - 书籍置顶和排序
+ * - 批量操作支持
+ * 
+ * 使用场景：
+ * - 书架管理
+ * - 书籍搜索和过滤
+ * - 分组管理
+ * - 阅读进度同步
+ * - 书籍导入导出
+ */
 import booksUtils from '../../common/utils/booksUtils';
 import DbUtil from '../../common/utils/DbUtil';
 import toolsUtils from '../../common/utils/ToolsUtils';
@@ -6,10 +30,25 @@ import { Books } from '../entities/Books';
 import { BooksTypeSearchParams } from '../types/BooksType';
 import { ColumnInfo } from '../types/ColumnInfo';
 
+/**
+ * 书籍DAO类
+ * 负责books表的所有数据库操作
+ */
 class BooksDao {
+  /**
+   * 表名常量
+   * @type {string}
+   */
   TABLE_NAME: string = 'books'
 
-  // 创建books数据表
+  /**
+   * 初始化书籍表
+   * @returns {Promise<void>}
+   * @description 
+   * 1. 获取表的创建SQL语句
+   * 2. 创建数据表
+   * 3. 检查并补全缺失字段
+   */
   async initBooksTable() {
     try {
       const createSql = AppDatabaseUtil.getCreateSql(this.TABLE_NAME);

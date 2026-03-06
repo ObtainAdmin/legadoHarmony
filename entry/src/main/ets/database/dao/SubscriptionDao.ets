@@ -2,7 +2,30 @@
  * @author 2008
  * @datetime 2024/7/15 1:34
  * @className: SubscriptionDao
- * 订阅源
+ * 
+ * 订阅源数据访问对象 (Subscription Data Access Object)
+ * 
+ * 功能说明：
+ * 1. 提供对rssSources表的完整CRUD操作
+ * 2. 管理RSS订阅源的配置信息
+ * 3. 支持订阅源的搜索、过滤、排序和分页
+ * 4. 处理订阅源的启用/禁用状态管理
+ * 5. 支持订阅源置顶和自定义排序
+ * 
+ * 核心功能：
+ * - 订阅源表初始化和维护
+ * - 订阅源的增删改查操作
+ * - 订阅源状态管理（启用/禁用、置顶、显示控制）
+ * - 订阅源搜索和过滤（按名称、分组等）
+ * - 批量操作支持
+ * - 与历史记录表的联动操作
+ * 
+ * 使用场景：
+ * - RSS订阅源管理界面
+ * - 订阅源导入导出
+ * - 订阅源搜索和筛选
+ * - 订阅源状态更新
+ * - 阅读时的订阅源选择
  */
 import DbUtil from '../../common/utils/DbUtil';
 import rssSourcesUtils from '../../common/utils/rssSourcesUtils';
@@ -12,12 +35,24 @@ import { ColumnInfo } from '../types/ColumnInfo';
 import { rssSourcesTypeParams } from '../types/rssSourcesType';
 import rssSourcesHistoryDao from './RssSourcesHistoryDao';
 
+/**
+ * 删除参数接口
+ * 支持通过ID或URL删除订阅源
+ */
 interface delParams {
-  url?: string,
-  id:number
+  url?: string,  // 订阅源URL（可选）
+  id:number      // 订阅源ID
 }
 
+/**
+ * 订阅源DAO类
+ * 负责rssSources表的所有数据库操作
+ */
 class SubscriptionDao {
+  /**
+   * 表名常量
+   * @type {string}
+   */
   TABLE_NAME: string = 'rssSources'
 
   // 创建book_subscription数据表

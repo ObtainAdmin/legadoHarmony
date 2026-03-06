@@ -1,7 +1,34 @@
+/**
+ * 书源实体类 (Book Source Entity)
+ * 
+ * 功能说明：
+ * 1. 定义书源的核心数据结构
+ * 2. 管理书源的配置信息和解析规则
+ * 3. 支持书源的启用/禁用、分组、排序等管理功能
+ * 4. 提供书源与数据库实体之间的转换
+ * 
+ * 核心属性：
+ * - 书源基本信息：URL、名称、分组、类型、等级
+ * - 书源配置：请求头、并发率、Cookie管理、登录配置
+ * - 解析规则：发现规则、搜索规则、书籍信息规则、目录规则、正文规则、段评规则
+ * - 状态控制：是否启用、是否置顶、是否显示最近图标
+ * - 性能指标：响应时间、权重、最后更新时间
+ * 
+ * 使用场景：
+ * - 书源管理界面
+ * - 书源导入导出
+ * - 书籍搜索和发现
+ * - 书籍内容解析
+ * - 书源性能监控
+ */
 import { GSON } from '../../common/utils/utils'
 import { BookSourcePart } from './BookSourcePart'
 import { BookInfoRule, ContentRule, ExploreRule, ReviewRule, SearchRule, TocRule } from './rule'
 
+/**
+ * 书源实体类
+ * 定义书源的完整配置信息和解析规则
+ */
 @Observed
 export class BookSource {
   // 地址，包括 http/https
