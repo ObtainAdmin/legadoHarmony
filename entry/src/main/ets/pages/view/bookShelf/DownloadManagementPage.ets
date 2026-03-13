@@ -1,9 +1,43 @@
+/**
+ * 下载管理页面 - 管理书籍下载和导出功能
+ * 
+ * 功能概述：
+ * 1. 显示下载中的书籍列表，支持暂停/继续操作
+ * 2. 显示已下载的书籍列表，支持导出操作
+ * 3. 显示已导出的书籍列表，支持文件管理
+ * 4. 提供导出设置功能，包括格式、路径、净化选项等
+ * 5. 支持编辑模式，批量选择和管理下载项
+ * 
+ * 页面结构：
+ * - 顶部：分类标签（全部、小说、漫画、有声书等）
+ * - 主体：Tabs切换（下载、导出）
+ *   - 下载Tab：下载中列表、已下载列表
+ *   - 导出Tab：已下载列表、已导出列表
+ * - 底部：导出设置对话框
+ * 
+ * 数据模型：
+ * 使用DownloadItem类表示下载项，包含书籍名称、下载进度、文件类型等信息
+ * 使用持久化存储管理导出设置
+ */
+
 import { router } from '@kit.ArkUI';
 import picker from '@ohos.file.picker';
 import fs from '@ohos.file.fs';
 import { ThemeItem } from '../../../common/model/Theme';
 import { ThemeStorageKey } from '../../../common/constants/Theme';
 
+/**
+ * 下载项数据模型类
+ * 
+ * 功能：封装单个下载项的基本信息
+ * 属性：
+ * - bookName: 书籍名称
+ * - downloadNumber: 已下载数量/章节数
+ * - Total: 总数量/章节数
+ * - Type: 文件类型（EPUB、TXT、PDF等）
+ * 
+ * 使用场景：在下载列表、已下载列表、已导出列表中显示下载项信息
+ */
 class DownloadItem {
   bookName: string
   downloadNumber: number
@@ -23,42 +57,104 @@ class DownloadItem {
   }
 }
 
+// 持久化存储导出设置列表，初始值为5个false
 PersistentStorage.persistProp('ExportSettingList', [false, false, false, false, false]);
 
+/**
+ * 下载管理页面结构体
+ * 
+ * 职责：
+ * 1. 管理下载和导出功能的完整流程
+ * 2. 显示三种下载状态：下载中、已下载、已导出
+ * 3. 提供编辑模式，支持批量操作
+ * 4. 管理导出设置对话框
+ * 5. 处理分类筛选和Tabs切换
+ * 
+ * 组件特点：
+ * - 使用@Entry装饰器，表示这是一个页面级组件
+ * - 使用@Component装饰器，表示这是一个UI组件
+ * - 支持主题颜色配置
+ * - 使用持久化存储管理导出设置
+ */
 @Entry
 @Component
 struct DownloadManagementPage {
+  /** 底部矩形高度，从应用存储中读取，用于适配不同设备 */
   @StorageLink('bottomRectHeight') bottomRectHeight: number = 0
+  
+  /** 顶部矩形高度，从应用存储中读取，用于适配不同设备 */
   @StorageLink('topRectHeight') topRectHeight: number = 0
+  
+  /** 当前选中的Tab索引：0-下载，1-导出 */
   @State currentTabIndex: number = 0
+  
+  /** 当前选中的分类卡片索引，用于筛选不同类型的内容 */
   @State currentScrollCardIndex: number = 0
+  
+  /** 搜索框的值，当前未使用，保留供未来扩展 */
   @State SearchValue: string = ""
+  
+  /** 编辑模式状态，true表示进入编辑模式，false表示正常模式 */
   @State IsEdit: boolean = false
+  
+  /** 导出设置对话框显示状态 */
   @State isShowExportSetting: boolean = false
+  
+  /** 导出设置列表，存储在持久化存储中，包含5个开关设置 */
   @StorageLink('ExportSettingList') ExportSettingList: Array<boolean> = [false, false, false, false, false]
+  
+  /** 分类列表，用于筛选不同类型的内容 */
   @State questionsList: Array<string> = ["全部", "小说", "漫画", "有声书", "有声书", "有声书"]
+  
+  /** 下载中的项目列表，包含正在下载的书籍信息 */
   @State DownloadingItemList: DownloadItem[] = [
     new DownloadItem("斗破苍穹", 12, 100, "EPUB"),
     new DownloadItem("斗破苍穹", 70, 150, "TXT"),
     new DownloadItem("斗破苍穹", 50, 200, "PDF"),
     new DownloadItem("斗破苍穹", 50, 200, "PDF"),
   ]
+  
+  /** 已下载完成的项目列表，包含下载完成的书籍信息 */
   @State DownloadFinishItemList: DownloadItem[] = [
     new DownloadItem("斗破苍穹完成", 12, 100, "EPUB"),
     new DownloadItem("斗破苍穹完成", 70, 150, "TXT"),
     new DownloadItem("斗破苍穹完成", 50, 200, "PDF"),
   ]
+  
+  /** 已导出的项目列表，包含已导出文件的书籍信息 */
   @State ExportFinishList: DownloadItem[] = [
     new DownloadItem("斗破苍穹导出", 12, 100, "EPUB"),
     new DownloadItem("斗破苍穹导出", 70, 150, "TXT"),
     new DownloadItem("斗破苍穹导出", 50, 200, "PDF"),
   ]
 
-  // 主题颜色
+  /** 应用主题配置，从应用存储中读取，用于UI元素颜色 */
   @StorageProp(ThemeStorageKey.THEME) theme: ThemeItem = {} as ThemeItem
 
+  /**
+   * 构建下载管理页面UI的主要方法
+   * 
+   * 布局结构：
+   * 1. Stack布局作为根容器
+   * 2. 非编辑模式下显示分类筛选栏
+   * 3. Tabs组件包含两个标签页：下载、导出
+   * 
+   * 下载Tab内容：
+   * - 下载中列表：显示正在下载的书籍，带进度条
+   * - 已下载列表：显示下载完成的书籍
+   * 
+   * 导出Tab内容：
+   * - 已下载列表：显示可导出的书籍，带导出按钮
+   * - 已导出列表：显示已导出的书籍
+   * 
+   * 交互功能：
+   * - 分类筛选：点击分类标签筛选内容
+   * - 编辑模式：点击更多按钮进入编辑模式
+   * - Tabs切换：在下载和导出功能间切换
+   */
   build() {
     Stack() {
+      // 非编辑模式下显示分类筛选栏
       if (this.IsEdit === false) {
         Row({ space: 12 }) {
           Scroll() {
@@ -74,7 +170,7 @@ struct DownloadManagementPage {
                 .padding(8)
                 .backgroundColor(this.currentScrollCardIndex === index ? this.theme.secondColor : 'rgb(240,240,240)')
                 .onClick(() => {
-                  this.currentScrollCardIndex = index
+                  this.currentScrollCardIndex = index  // 更新选中的分类索引
                 })
               })
             }
@@ -85,6 +181,7 @@ struct DownloadManagementPage {
           .scrollable(ScrollDirection.Horizontal)
 
           Blank(1)
+          // 更多按钮：点击进入编辑模式
           Image($r('app.media.more_search'))
             .width(24)
             .onClick(() => {
@@ -103,13 +200,14 @@ struct DownloadManagementPage {
         .zIndex(2)
       }
 
-
+      // Tabs组件：下载和导出两个标签页
       Tabs({
         barPosition: BarPosition.Start
       }) {
+        // 下载标签页
         TabContent() {
           Column() {
-            // 下载-下载中
+            // 下载-下载中列表
             if (this.DownloadingItemList.length > 0) {
               Row() {
                 Text(`下载中 (${this.DownloadingItemList.length})`)

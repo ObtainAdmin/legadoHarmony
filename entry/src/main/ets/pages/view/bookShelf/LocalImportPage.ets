@@ -1,8 +1,42 @@
+/**
+ * 本地导入页面 - 扫描和导入本地书籍文件
+ * 
+ * 功能概述：
+ * 1. 智能扫描本地存储中的书籍文件（txt、epub、pdf、mp3、wma等格式）
+ * 2. 本地目录浏览，查看和管理本地文件
+ * 3. 支持搜索功能，快速查找特定书籍
+ * 4. 提供全选和批量导入功能
+ * 5. 支持按时间、名称、大小排序
+ * 
+ * 页面结构：
+ * - 顶部：搜索栏，支持展开/收起动画
+ * - 主体：Tabs切换（智能扫描、本地目录）
+ *   - 智能扫描Tab：自动扫描到的书籍列表
+ *   - 本地目录Tab：手动浏览的本地文件列表
+ * - 底部：操作栏（全选、导入书架）
+ * 
+ * 数据模型：
+ * 使用SmartScanItem类表示扫描到的书籍项
+ * 支持多种文件格式和排序方式
+ */
+
 import { router } from '@kit.ArkUI';
 import fs from '@ohos.file.fs';
 import { ThemeStorageKey } from '../../../common/constants/Theme';
 import { ThemeItem } from '../../../common/model/Theme';
 
+/**
+ * 智能扫描项数据模型类
+ * 
+ * 功能：封装本地扫描到的书籍文件信息
+ * 属性：
+ * - bookName: 书籍名称
+ * - Type: 文件类型（EPUB、TXT、PDF等）
+ * - CreateTime: 文件创建时间
+ * - size: 文件大小
+ * 
+ * 使用场景：在智能扫描和本地目录列表中显示书籍信息
+ */
 class SmartScanItem {
   bookName: string
   Type: string
@@ -22,6 +56,15 @@ class SmartScanItem {
   }
 }
 
+/**
+ * 格式化日期函数
+ * 
+ * 功能：将Date对象格式化为"YYYY/MM/DD"字符串
+ * @param date 要格式化的Date对象
+ * @returns 格式化后的日期字符串
+ * 
+ * 示例：new Date(2023, 11, 25) -> "2023/12/25"
+ */
 function formatDate(date: Date): string {
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 月份从0开始，所以需要加1
@@ -29,32 +72,72 @@ function formatDate(date: Date): string {
   return `${year}/${month}/${day}`;
 }
 
+/**
+ * 本地导入页面结构体
+ * 
+ * 职责：
+ * 1. 管理本地书籍文件的扫描和显示
+ * 2. 处理搜索功能的交互和动画
+ * 3. 控制Tabs切换和内容显示
+ * 4. 提供排序和筛选功能
+ * 5. 处理批量导入操作
+ * 
+ * 组件特点：
+ * - 使用@Entry装饰器，表示这是一个页面级组件
+ * - 使用@Component装饰器，表示这是一个UI组件
+ * - 支持搜索栏展开/收起动画
+ * - 集成主题颜色配置
+ */
 @Entry
 @Component
 struct LocalImportPage {
+  /** 底部矩形高度，从应用存储中读取，用于适配不同设备 */
   @StorageLink('bottomRectHeight') bottomRectHeight: number = 0
+  
+  /** 顶部矩形高度，从应用存储中读取，用于适配不同设备 */
   @StorageLink('topRectHeight') topRectHeight: number = 0
+  
+  /** 当前选中的Tab索引：0-智能扫描，1-本地目录 */
   @State currentTabIndex: number = 0
+  
+  /** 搜索框输入的值 */
   @State SearchValue: string = ""
+  
+  /** 搜索框点击状态，true表示搜索框已展开 */
   @State onSearchClick: boolean = false
+  
+  /** 搜索框垂直平移距离，用于动画效果 */
   @State SearchTranslateY: number = 0
+  
+  /** 搜索控制器，管理Search组件的状态和行为 */
   SearchController: SearchController = new SearchController()
+  
+  /** 支持的文件类型图标列表 */
   FilesTypeImageList: Array<string> = ["EPUB", "TXT", "PDF"]
+  
+  /** 智能扫描项列表，包含扫描到的书籍信息 */
   @State SmartScanItemList: SmartScanItem[] = [
   // new SmartScanItem("斗破苍穹", "12MB", "EPUB", new Date()),
   // new SmartScanItem("斗破苍穹", "12MB", "TXT", new Date()),
   // new SmartScanItem("斗破苍穹", "12MB", "PDF", new Date()),
   ]
+  
+  /** 菜单项列表，用于排序和筛选 */
   menuList: string[] = [
     '按时间排序',
     '按名称排序',
     '按大小排序',
     '系统文件夹',
   ]
-  // 主题颜色
+  
+  /** 应用主题配置，从应用存储中读取，用于UI元素颜色 */
   @StorageProp(ThemeStorageKey.THEME) theme: ThemeItem = {} as ThemeItem
 
-  // 加载测试
+  /**
+   * 页面显示时的生命周期方法
+   * 功能：模拟数据加载，延迟1秒后显示测试数据
+   * 使用场景：开发测试阶段，展示页面布局效果
+   */
   onPageShow(): void {
     setTimeout(() => {
       this.SmartScanItemList = [
