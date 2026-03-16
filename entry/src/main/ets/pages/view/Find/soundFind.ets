@@ -1,45 +1,116 @@
-import noFind from '../../../componets/common/noFind'
-import mayAlsoLike from './mayAlsoLike'
+/**
+ * @author 2008
+ * @datetime 2024/6/27 0:34
+ * @className: soundFind
+ * @description: 有声书发现页面组件 - 专门用于展示有声书内容的发现页面
+ * 
+ * 组件功能：
+ * 1. 展示有声书推荐内容，包含"猜你喜欢"模块
+ * 2. 提供多个有声书分类区块，每个区块独立展示
+ * 3. 当没有有声书数据时显示友好的空状态提示
+ * 
+ * 页面结构：
+ * - 外层Column：垂直布局容器，设置16px间距
+ * - 三个有声书区块：每个区块包含猜你喜欢、标题和无数据提示
+ * - 统一的样式：白色背景、圆角边框、固定高度
+ * 
+ * 设计特点：
+ * - 特殊的标题文本："发现有声书"而不是简单的"有声书"
+ * - 更大的顶部留白：107px内边距，为音频内容提供特殊的视觉处理
+ * - 强调发现属性：标题突出"发现"概念，引导用户探索新内容
+ * 
+ * 数据状态：
+ * - 所有区块使用默认的"猜你喜欢"标题
+ * - 无数据时显示noFind组件的友好提示，顶部留白更大
+ * 
+ * 样式特点：
+ * - 每个区块高度436px，确保视觉一致性
+ * - 12px圆角边框，现代化卡片设计
+ * - 顶部107px内边距（比其他发现页面更大），突出音频内容的特殊性
+ * - 整体居中对齐，提升视觉平衡感
+ * 
+ * 与其他发现页面的区别：
+ * - 标题独特性：使用"发现有声书"而非"有声书"
+ * - 更大的留白：107px vs 75px，为音频内容创造独特的视觉节奏
+ * - 内容类型差异：专门针对音频内容优化展示方式
+ */
 
+// 导入必要的组件
+import noFind from '../../../componets/common/noFind'          // 无数据提示组件
+import mayAlsoLike from './mayAlsoLike'                       // 猜你喜欢组件
+
+/**
+ * 有声书发现页面组件
+ * 负责展示有声书推荐内容和分类信息
+ */
 @Component
 export default struct soundFind {
+  /**
+   * 组件UI构建方法
+   * 构建有声书发现页面的整体布局
+   * 
+   * 布局逻辑：
+   * 1. 外层Column：垂直排列三个有声书区块，间距16px
+   * 2. 每个区块：包含猜你喜欢、发现标题、无数据提示
+   * 3. 特殊内边距：107px顶部留白，突出音频内容的独特性
+   * 4. 统一的卡片样式：白色背景、圆角、固定高度
+   * 
+   * 设计考量：
+   * - "发现有声书"：强调探索新音频内容的体验
+   * - 更大的留白：为音频内容创造轻松、舒适的视觉感受
+   * - 多区块布局：提供丰富的音频内容发现机会
+   * - 统一的视觉样式：保持与其他发现页面的整体协调性
+   * 
+   * 用户体验：
+   * - 更大的留白空间营造音频内容特有的轻松氛围
+   * - "发现"概念引导用户主动探索新的音频内容
+   * - 统一的卡片设计确保页面整体的视觉一致性
+   * 
+   * 扩展性：
+   * - 可动态加载真实的有声书数据
+   * - 可扩展为支持音频播放预览功能
+   * - 可添加时长、播音员等音频特有的信息展示
+   */
   build() {
     Column({
-      space:16
-    }){
-      Column(){
-        mayAlsoLike()
-        Text('发现有声书')
+      space: 16  // 设置子组件间距为16px
+    }) {
+      // 第一个有声书推荐区块
+      Column() {
+        mayAlsoLike()                                             // 猜你喜欢标题栏
+        Text('发现有声书')                                         // 特殊的发现标题（不是简单的"有声书"）
         noFind().padding({
-          top:107
+          top: 107                                                // 特殊的顶部内边距：107px（比其他发现页面更大）
         })
       }
-      .borderRadius(12)
-      .backgroundColor(Color.White)
-      .height(436)
+      .borderRadius(12)                                           // 12px圆角
+      .backgroundColor(Color.White)                              // 白色背景
+      .height(436)                                               // 固定高度436px
 
-      Column(){
-        mayAlsoLike()
-        Text('发现有声书')
+      // 第二个有声书推荐区块
+      Column() {
+        mayAlsoLike()                                             // 猜你喜欢标题栏
+        Text('发现有声书')                                         // 特殊的发现标题
         noFind().padding({
-          top:107
+          top: 107                                                // 特殊的顶部内边距：107px
         })
       }
-      .borderRadius(12)
-      .backgroundColor(Color.White)
-      .height(436)
+      .borderRadius(12)                                           // 12px圆角
+      .backgroundColor(Color.White)                              // 白色背景
+      .height(436)                                               // 固定高度436px
 
-      Column(){
-        mayAlsoLike()
-        Text('发现有声书')
+      // 第三个有声书推荐区块
+      Column() {
+        mayAlsoLike()                                             // 猜你喜欢标题栏
+        Text('发现有声书')                                         // 特殊的发现标题
         noFind().padding({
-          top:107
+          top: 107                                                // 特殊的顶部内边距：107px
         })
       }
-      .borderRadius(12)
-      .backgroundColor(Color.White)
-      .height(436)
+      .borderRadius(12)                                           // 12px圆角
+      .backgroundColor(Color.White)                              // 白色背景
+      .height(436)                                               // 固定高度436px
     }
-    .alignItems(HorizontalAlign.Center)
+    .alignItems(HorizontalAlign.Center)                          // 整体居中对齐
   }
 }
