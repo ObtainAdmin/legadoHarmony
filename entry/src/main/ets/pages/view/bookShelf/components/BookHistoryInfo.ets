@@ -271,9 +271,12 @@ export default struct BookHistoryInfo {
       delCache: this.delCache,
       isShowCache: true
     }),
-    autoCancel: true,  // 点击外部自动取消
-    alignment: DialogAlignment.Center,  // 居中对齐
-    gridCount: 4,  // 网格
+    autoCancel: true,
+    alignment: DialogAlignment.Center,
+    gridCount: 4,
+    customStyle: false,
+    cornerRadius: 25,
+  })
 
   async onAccept() {
     if (this.bookHistory.id) {
