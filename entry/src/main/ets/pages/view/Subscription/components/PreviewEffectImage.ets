@@ -4,7 +4,8 @@
  * @className: PreviewEffectImage
  * @description: 预览效果图片组件 - 用于显示RSS源的图标预览效果
  *              功能：支持本地图标和网络图标，可自定义标题和尺寸
- *              当图片加载失败时，自动显示首字母占位图
+ *                     当图片加载失败时，自动显示首字母占位图
+ *              交互：根据sourceIconIsUrl自动判断图标类型，加载失败时显示首字母占位
  */
 import CommonConstants from '../../../../common/constants/CommonConstants'
 import FontConstants from '../../../../common/constants/FontConstants'
@@ -17,30 +18,56 @@ import { ThemeItem } from '../../../../common/model/Theme'
  */
 @Component
 export default struct PreviewEffectImage{
-  /** 自定义标题 - 当没有图标URL时显示的文字 */
+  /** 自定义标题 - 当没有图标URL时显示的文字，用于生成首字母占位图 */
   @Prop customizeTitle:string = ''
-  /** 图标路径 - 可以是本地资源路径或网络URL */
+  
+  /** 图标路径 - 可以是本地资源路径(如'app.media.xxx')或网络URL */
   @Prop sourceIcon:string = ''
-  /** 图标是否为URL - true表示网络图片，false表示本地资源 */
+  
+  /** 
+   * 图标是否为URL - 控制图标加载方式
+   * true: 表示网络图片，直接使用sourceIcon作为URL加载
+   * false: 表示本地资源，通过$r()方式加载
+   */
   @Prop sourceIconIsUrl:boolean = false
-  /** 预览图片宽度 - 默认60像素 */
+  
+  /** 预览图片宽度 - 默认60像素，可根据布局需要调整 */
   @Prop PreviewWidth:number = 60
-  /** 预览图片高度 - 默认60像素 */
+  
+  /** 预览图片高度 - 默认60像素，可根据布局需要调整 */
   @Prop PreviewHeight:number = 60
-  /** 是否显示标题 - 控制是否显示"预览效果"文字 */
+  
+  /** 
+   * 是否显示标题 - 控制是否显示"预览效果"文字
+   * 通常在大图预览时显示标题，小图标列表中隐藏
+   */
   @Prop isShowTitle:boolean = true
-  /** 图片圆角半径 - 默认4像素 */
+  
+  /** 图片圆角半径 - 默认4像素，控制图标显示为圆角矩形 */
   @Prop ImageRadius:number = 4
-  /** 源名称 - 图片加载失败时用于生成占位文字 */
+  
+  /** 源名称 - 图片加载失败时用于生成占位文字，显示首字符 */
   @Prop sourceName:string = ''
-  /** 图片加载错误状态 - true表示加载失败 */
+  
+  /** 
+   * 图片加载错误状态 - 内部状态管理
+   * true: 图片加载失败，显示占位图
+   * false: 图片加载成功或正在加载
+   */
   @State isError:boolean = false
-  // 主题颜色 - 从全局存储中获取当前主题
+  
+  /** 
+   * 当前主题颜色 - 从全局存储中获取
+   * 用于LoadingProgress进度条的颜色显示
+   */
   @StorageProp(ThemeStorageKey.THEME) theme: ThemeItem = {} as ThemeItem
 
   /**
    * 构建UI布局
    * 根据状态显示预览效果、加载中或错误占位图
+   * 布局结构：垂直排列的Column
+   *   - 标题区域(可选): 显示"预览效果"文字
+   *   - 图片区域: 根据isError状态显示实际图片或占位图
    */
   build() {
     Column(){
@@ -77,7 +104,8 @@ export default struct PreviewEffectImage{
 
   /**
    * 占位图名称数组 - 用于图片加载失败时显示不同颜色/样式的占位背景
-   * 根据源名称长度选择不同的预设图标
+   * 数组元素对应资源文件：icon_check_image_one 到 icon_check_image_ten
+   * 根据源名称长度选择不同的预设图标，使不同源的占位图有所区别
    */
   initialImage:string[] = ['one','two','three','four','five','six','seven','eight','nine','ten']
 
@@ -85,6 +113,15 @@ export default struct PreviewEffectImage{
    * 图片堆叠布局构建器
    * @param isShow - 是否显示自定义标题文字（true时显示首字母）
    * 功能：构建图片或占位图的堆叠布局
+   * 
+   * 布局说明：
+   * - Stack容器内包含两个层级：
+   *   1. 文字层（zIndex:9）: 显示源名称或自定义标题的首字母
+   *   2. 图片层: 显示实际图标或预设占位图标
+   * 
+   * 显示逻辑：
+   * - isError为true时: 显示预设占位图标(使用initialImage数组根据sourceName长度选择)
+   * - isError为false时: 显示实际图标(本地资源或网络图片)
    */
   @Builder ImageStack(isShow:boolean){
     Stack(){

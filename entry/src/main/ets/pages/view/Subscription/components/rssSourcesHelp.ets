@@ -2,6 +2,9 @@
  * @author 2008
  * @datetime 2024/7/22 13:40
  * @className: rssSourcesHelp
+ * @description: 订阅源帮助信息组件 - 显示书源和订阅源的帮助文档链接及规则说明
+ *              功能：展示帮助文档入口链接、规则标志说明、规则类型说明
+ *              交互：点击链接可跳转至对应帮助文档，展示规则编写规范
  */
 import CommonConstants from '../../../../common/constants/CommonConstants'
 import FontConstants from '../../../../common/constants/FontConstants'
