@@ -1,88 +1,179 @@
+/**
+ * 书源视图组件
+ * 
+ * 书源管理页面的主视图组件，负责显示和管理所有书源
+ * 主要功能：
+ * 1. 显示书源列表，支持按分组分类显示
+ * 2. 提供搜索、筛选、排序功能
+ * 3. 支持批量操作（启用/禁用、删除、移动分组、评分等）
+ * 4. 支持长按进入批量管理模式
+ * 5. 显示书源详细信息（名称、评分、更新时间、状态等）
+ * 
+ * @Component 声明为ArkUI组件
+ * @default 默认导出
+ */
+
+// 网络请求库，用于调试功能
 import axios, { AxiosError, AxiosResponse } from '@ohos/axios'
+// 日期处理库
 import dayjs from 'dayjs'
+// 侧边栏组件，用于显示分组导航
 import SideBar from '../../../../../componets/common/SideBar'
+// 对话框标题功能组件
 import dialogTitleFuction from '../../../../../componets/common/dialogTitleFuction'
+// 头部组件
 import Header from '../../../../../componets/common/Header'
+// 消息提示工具函数
 import { showMessage } from '../../../../../componets/common/promptShow'
+// 评分显示组件
 import Score from '../../../../../componets/common/Score'
+// 标签组件
 import Tag from '../../../../../componets/common/Tag'
+// 图标标题数据模型
 import { IconTitleVo } from '../../../../../componetsmodel/IconTitleVo'
+// ArkUI框架组件
 import { CustomContentDialog, router } from '@kit.ArkUI'
+// 书源数据访问对象
 import BookSourceDao from '../../../../../database/dao/BookSourceDao'
+// 书源分组相关类型和常量
 import { GroupPartList, SOURCE_GROUP_MAP } from '../../../../../database/entities/BookSource'
+// 书源部分数据实体
 import { BookSourcePart } from '../../../../../database/entities/BookSourcePart'
+// JSON处理工具
 import { JSON } from '@kit.ArkTS'
+// 源分组组件
 import SourceGroup from '../../../../../componets/ui/SourceGroup'
+// 书源搜索参数类型
 import { BookSourceSearchParams } from '../../../../../database/types/BookSourceType'
+// 筛选选项组件
 import FiltrateOption from './FiltrateOption'
+// 筛选文本组件
 import FilterText from './FilterText'
+// 主题相关类型和常量
 import { ThemeItem } from '../../../../../common/model/Theme'
 import { ThemeStorageKey } from '../../../../../common/constants/Theme'
 
 @Component
 export default struct SourceView {
+  /** 书源类型标题数组：小说、漫画、有声书 */
   titleArray: Array<string> = ['小说', '漫画', '有声书']
+  
+  /** 当前选中的书源类型索引 */
   index: number = 0
+  
+  /** 书源文件路径，从应用存储中获取 */
   @StorageProp('pathBookSource') pathBookSource: string = ''
+  
+  /** 顶部安全区域高度，跨组件共享 */
   @StorageLink('topRectHeight') topRectHeight: number = 0
+  
+  /** 底部安全区域高度，跨组件共享 */
   @StorageLink('bottomRectHeight') bottomRectHeight: number = 0
+  
+  /** 当前选中的分组索引 */
   @State currentIndex: number = 0
+  
+  /** 批量选择映射表：书源URL -> 是否选中 */
   @State activeNameMap: Record<string, boolean> = {}
+  
+  /** 是否全选状态（已弃用，保留兼容性） */
   @State fullActive: boolean = false
+  
+  /** 分组后的书源列表 */
   @State groupList: GroupPartList[] = []
+  
+  /** 原始书源列表数据 */
   @State sourceList: BookSourcePart[] = []
+  
+  /** 搜索关键词 */
   @State searchValue: string = ''
+  
+  /** 书源详情展开状态映射表：书源URL -> 是否展开详情 */
   @State clickNameMap: Record<string, boolean> = {}
+  
+  /** 书源启用状态映射表（已弃用，保留兼容性） */
   @State enabledMap: Record<string, boolean> = {}
+  
+  /** 是否处于批量管理模式，从父组件传入 */
   @Link isBatch: boolean
+  
+  /** 数据加载状态 */
   @State loading: boolean = true
+  
+  /** 错误提示文本 */
   @State errorText: string = ''
+  
+  /** 右侧菜单显示状态映射表：书源URL -> 是否显示菜单 */
   @State showRightDialogMap: Record<string, boolean> = {}
+  
+  /** 更多菜单显示状态 */
   @State showMoreDialog: boolean = false
+  
+  /** 批量操作中启用/禁用开关状态 */
   @State toggleAll: boolean = true
+  
+  /** 刷新触发器，变化时自动调用getList方法 */
   @Link @Watch('getList') refresh: number
+  
+  /** 侧边栏滚动控制器 */
   private scroll: Scroller = new Scroller()
+  
+  /** 主内容区滚动控制器 */
   private secondScroll = new Scroller()
+  
+  /** 对话框中的书源数据（用于评分等操作） */
   @State dialogItem: Partial<BookSourcePart> = {}
+  
+  /** 刷新计数器，用于触发重新渲染 */
   @StorageLink('refreshCount') refreshCount: number = 0
+  
+  /** 是否显示分组选择弹窗 */
   @State isShowGroup: boolean = false
+  
+  /** 当前展开的筛选条件标题索引（-1表示无展开） */
   @State currentTitle: number = -1
+  
+  /** 筛选查询参数 */
   @State query: BookSourceSearchParams = {
-    enabled: undefined,
-    bookSourceGrade: undefined,
-    order: undefined,
-    hasLoginUrl: undefined
+    enabled: undefined,        // 启用状态筛选
+    bookSourceGrade: undefined, // 书源等级筛选
+    order: undefined,          // 排序方式
+    hasLoginUrl: undefined     // 是否有登录URL
   }
-  // 主题颜色
+  
+  /** 主题颜色配置，从应用存储中获取 */
   @StorageProp(ThemeStorageKey.THEME) theme: ThemeItem = {} as ThemeItem
+  
+  /** 书源评分对话框控制器，用于显示和操作评分对话框 */
   private dialogController: CustomDialogController = new CustomDialogController({
     builder: CustomContentDialog({
-      primaryTitle: '书源评分',
-      contentAreaPadding: {
+      primaryTitle: '书源评分',  // 对话框主标题
+      contentAreaPadding: {      // 内容区域内边距
         left: 10,
         top: 10,
         right: 10,
         bottom: 10
       },
-      contentBuilder: () => {
+      contentBuilder: () => {    // 对话框内容构建器
         this.buildContent();
       },
-      buttons: [
+      buttons: [                 // 对话框按钮配置
         {
-          value: '取消',
+          value: '取消',         // 取消按钮
           background: this.theme.secondColor,
           fontColor: this.theme.mainColor,
-          action: () => {
+          action: () => {        // 取消按钮点击动作
             this.dialogItem = {}
             this.dialogController.close()
           }
         },
         {
-          value: '确认',
+          value: '确认',         // 确认按钮
           background: 'this.theme.mainColor',
           fontColor: '#FFFFFF',
-          action: async () => {
+          action: async () => {  // 确认按钮点击动作
             if (this.isBatch) {
+              // 批量操作：更新所有选中的书源
               const sourceList: BookSourcePart[] = []
               this.sourceList.forEach((item, i) => {
                 if (this.activeNameMap[item.bookSourceUrl]) {
@@ -98,6 +189,7 @@ export default struct SourceView {
               this.dialogItem = {}
               return
             }
+            // 单个操作：更新当前书源
             await BookSourceDao.updateFlow(this.dialogItem as BookSourcePart)
             this.getList()
             this.dialogItem = {}
@@ -105,7 +197,7 @@ export default struct SourceView {
           }
         }
       ],
-      theme: {
+      theme: {                   // 对话框主题配置
         colors: {
           confirm: this.theme.mainColor
         }
@@ -113,30 +205,52 @@ export default struct SourceView {
     }),
   });
 
+  /**
+   * 组件即将显示时调用的生命周期方法
+   * 
+   * 功能：
+   * 1. 设置加载状态为true
+   * 2. 调用getList()方法加载书源数据
+   */
   aboutToAppear() {
     console.info('TagInfo', '当前下标： ' + this.index)
     this.loading = true
     this.getList()
   }
 
+  /**
+   * 组件即将消失时调用的生命周期方法
+   * 
+   * 功能：
+   * 1. 清空搜索关键词
+   */
   aboutToDisappear(): void {
     this.searchValue = ''
   }
 
+  /**
+   * 获取书源列表数据
+   * 
+   * 功能：
+   * 1. 增加刷新计数器，触发重新渲染
+   * 2. 调用BookSourceDao.flowSearch()查询书源数据
+   * 3. 处理查询结果，更新sourceList和groupList
+   * 4. 设置加载状态和错误提示
+   */
   getList() {
     this.refreshCount += 1
     BookSourceDao.flowSearch({
-      type: [0, 2, 1][this.index],
-      searchKey: this.searchValue,
-      enabled: this.query.enabled,
-      bookSourceGrade: this.query.bookSourceGrade,
-      order: this.query.order,
-      hasLoginUrl: this.query.hasLoginUrl
+      type: [0, 2, 1][this.index],  // 书源类型映射：0=小说，2=漫画，1=有声书
+      searchKey: this.searchValue,   // 搜索关键词
+      enabled: this.query.enabled,   // 启用状态筛选
+      bookSourceGrade: this.query.bookSourceGrade, // 书源等级筛选
+      order: this.query.order,       // 排序方式
+      hasLoginUrl: this.query.hasLoginUrl // 是否有登录URL
     }).then(data => {
       const bookSource = data ?? []
       console.info('TagInfo', JSON.stringify(bookSource.slice(0, 3)))
       this.sourceList = bookSource
-      this.getGroupList()
+      this.getGroupList()  // 重新分组
       this.loading = false
       console.info('TagInfo', '数量 ' + this.sourceList.length)
       if (!this.sourceList.length) {
@@ -145,6 +259,15 @@ export default struct SourceView {
     })
   }
 
+  /**
+   * 将书源列表按分组进行归类
+   * 
+   * 功能：
+   * 1. 遍历所有书源，按bookSourceGroup字段进行分组
+   * 2. 过滤掉不包含搜索关键词的书源
+   * 3. 构建groupMap对象，key为分组名称，value为分组数据
+   * 4. 将groupMap转换为数组赋值给groupList
+   */
   getGroupList() {
     const groupMap: Record<string, GroupPartList> = {};
     this.sourceList.forEach((item: BookSourcePart) => {
@@ -166,13 +289,23 @@ export default struct SourceView {
     this.groupList = Object.values(groupMap);
   }
 
+  /**
+   * 处理滚动位置变化事件
+   * 
+   * @param start 新的分组索引
+   * @param flg 滚动来源标志：false表示侧边栏滚动，true表示主内容区滚动
+   * 
+   * 功能：
+   * 1. 如果当前索引与新的索引不同，更新currentIndex
+   * 2. 根据flg标志决定滚动哪个滚动控制器
+   */
   scrollChangeAction(start: number, flg: Boolean) {
     if (this.currentIndex !== start) {
       this.currentIndex = start;
       if (!flg) {
-        this.scroll.scrollToIndex(start);
+        this.scroll.scrollToIndex(start);  // 滚动侧边栏
       } else {
-        this.secondScroll.scrollToIndex(start);
+        this.secondScroll.scrollToIndex(start);  // 滚动主内容区
       }
     }
   }
