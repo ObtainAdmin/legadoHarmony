@@ -3,7 +3,14 @@
  * @datetime 2024/7/11 21:33
  * @className: Subscription
  * 新版订阅页面
+ * 
+ * =====================================================
+ * 模块功能说明：
+ * 本文件是RSS订阅管理的主页面，负责显示订阅源列表、分组管理、批量编辑等功能。
+ * 支持从剪贴板导入、本地JSON文件导入、新建订阅、批量删除等操作。
+ * =====================================================
  */
+
 import CommonConstants from '../../../common/constants/CommonConstants'
 import ImageConstants from '../../../common/constants/ImageConstants'
 import PaddingConstants from '../../../common/constants/PaddingConstants'
@@ -27,33 +34,71 @@ import addBookTypeDialog from '../../../componets/common/addBookTypeDialog'
 import rssSourcesUtils from '../../../common/utils/rssSourcesUtils'
 import dialogTitleFuction from '../../../componets/common/dialogTitleFuction'
 
+/**
+ * SubscriptionIndex 主组件
+ * 功能：RSS订阅主页面的核心组件，管理订阅源列表、分组、批量编辑等交互
+ */
 @Component
 export default struct SubscriptionIndex {
+  
+  // ==================== 状态变量 (State) ====================
+  // 控制导入对话框的显示/隐藏
   @State isShowImport: boolean = false
   @State isShowNewSources: boolean = false
+  // 当前Tab页索引，监听变化时触发刷新
   @Prop @Watch('currentTabIndexChange') currentTabIndex: number
+  
+  // 顶部安全区域高度，用于适配异形屏
   @StorageLink('topRectHeight') topRectHeight: number = 0
+  
+  // RSS订阅源刷新状态，存储键值联动，刷新时自动调用getList
   @StorageLink(CommonConstants.RSS_SOURCES_REFRESHING) @Watch('getList') refreshing: number = 0
+  
+  // 更多菜单选项列表，包含：粘贴导入、本地导入、新建订阅、批量管理
   private moreList: IconTitleVo[] = [
     new IconTitleVo($r('app.media.icon_rule_paste'), '粘贴导入'),
     new IconTitleVo($r('app.media.icon_rule_export'), '本地导入'),
     new IconTitleVo($r('app.media.icon_rule_add'), '新建订阅'),
     new IconTitleVo($r('app.media.icon_rule_batch'), '批量管理'),
   ]
-  //批量管理选中内容存储
+  
+  // 批量管理选中状态存储，key为订阅源ID，value为是否选中
+  // 使用@Provide让子组件可以访问批量选择状态
   @Provide('batchList') batchList: Record<number, boolean> = {}
+  
+  // 最近使用的订阅源历史记录
   @State RecentlyUsed: rssSourcesHistory[] = []
+  // 加载状态标志
   @State loading: boolean = false
+  
+  // 导入对话框中显示的订阅源列表（用于选择要导入的订阅）
   @State subscriptionList: rssSources[] = []
+  
+  // 原始订阅源列表（从数据库查询得到的全部订阅）
   @State rssSourcesList: rssSources[] = []
+  
+  // 分组后的订阅源列表，按sourceGroup字段分组
   @State groupList: rssGroupList[] = []
+  
+  // 是否处于批量编辑模式
   @State batchEdit: boolean = false
+  
+  // 新建分组时的分组类型/名称
   @State newGroupType: string = ''
-  //全选
+  
+  // 批量编辑模式下的全选状态
   @Provide('batchAll') batchAll: boolean = false
-  // 主题颜色
+  
+  // 主题颜色配置（从主题存储中获取）
   @StorageProp(ThemeStorageKey.THEME) theme: ThemeItem = {} as ThemeItem
-  //刷新
+  
+  // ==================== 公共方法 ====================
+  /**
+   * 刷新方法：重置状态并重新加载数据
+   * 1. 清空当前列表数据
+   * 2. 重新获取订阅源列表
+   * 3. 延迟获取最近使用历史
+   */
   refresh = () => {
     this.resetState()
     this.getList()
@@ -64,15 +109,29 @@ export default struct SubscriptionIndex {
     }, 100)
   }
 
+  /**
+   * Tab切换时的回调方法
+   * 当用户切换到当前Tab时，自动刷新数据
+   */
   currentTabIndexChange() {
     this.refresh()
   }
 
+  /**
+   * 重置状态方法
+   * 清空订阅源列表和分组列表，为重新加载做准备
+   */
   resetState() {
     this.subscriptionList = []
     this.groupList = []
   }
 
+  /**
+   * 获取订阅源列表
+   * 1. 从数据库查询所有订阅源
+   * 2. 构建批量选择状态映射（每个订阅源ID默认未选中）
+   * 3. 根据分组获取分组后的列表
+   */
   getList() {
     subscriptionDao.search().then(data => {
       const rssSources = data ?? []
@@ -90,6 +149,17 @@ export default struct SubscriptionIndex {
     })
   }
 
+  /**
+   * 获取分组列表
+   * 将订阅源按sourceGroup字段进行分组，生成Map结构后转为数组
+   * 相同group的订阅源会被归到同一个组中
+   */
+  /**
+   * 获取分组列表 - 将订阅源按sourceGroup分组
+   * 1. 遍历所有订阅源，提取sourceGroup字段作为分组依据
+   * 2. 创建groupMap字典，每个分组维护一个list数组
+   * 3. 最后将字典转换为数组赋值给groupList
+   */
   getGroupList() {
     const groupMap: Record<string, rssGroupList> = {};
     this.rssSourcesList.forEach((item: rssSources) => {
@@ -99,7 +169,7 @@ export default struct SubscriptionIndex {
         if (!groupMap[title]) {
           groupMap[title] = { title: title, list: [] };
         }
-        // 向当前group的list中添加BookSource对象
+        // 向当前group的list中添加rssSources对象
         groupMap[title].list.push(item);
       }
 
@@ -107,6 +177,19 @@ export default struct SubscriptionIndex {
     this.groupList = Object.values(groupMap)
   }
 
+  // ==================== 界面构建方法 ====================
+  /**
+   * build() - 主界面构建
+   * 
+   * 包含以下主要区域：
+   * 1. 顶部搜索栏：支持搜索订阅源、批量编辑、全选/取消全选
+   * 2. 分组列表区：显示按分组排列的订阅源
+   * 3. 底部导入按钮：提供导入新订阅的入口
+   * 
+   * 条件渲染逻辑：
+   * - batchEdit为true时显示批量编辑界面（全选、完成按钮）
+   * - batchEdit为false时显示普通搜索界面
+   */
   build() {
     Column() {
       Column() {
