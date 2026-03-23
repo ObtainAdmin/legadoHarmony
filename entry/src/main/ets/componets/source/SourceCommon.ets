@@ -1,31 +1,31 @@
 /**
  * SourceCommon 组件 - 通用书源页面组件
- * 
+ *
  * 功能概述：
  * 1. 提供书源管理界面，支持默认显示和隐藏书源两种视图
  * 2. 集成搜索功能，支持按关键词筛选书源
  * 3. 提供更多操作菜单（排序、书源管理、批量管理）
  * 4. 支持批量管理模式，显示批量操作工具栏
  * 5. 使用Tabs组件切换不同书源视图，集成动画效果
- * 
+ *
  * 设计特点：
  * 1. 分层布局：使用Stack实现搜索栏和内容区域的叠加
  * 2. 状态管理：管理搜索值、批量模式、刷新计数等状态
  * 3. 动画效果：批量模式切换时的平滑平移动画
  * 4. 组件复用：复用sourceTabs、SourceView等子组件
  * 5. 交互设计：直观的搜索、菜单和批量操作
- * 
+ *
  * 使用场景：
  * 1. 书源管理页面
  * 2. 需要搜索和筛选书源的界面
  * 3. 需要批量操作书源的场景
- * 
+ *
  * 组件结构：
  * - 搜索区域：搜索框和更多操作菜单
  * - 标签区域：sourceTabs组件显示书源分类
  * - 内容区域：Tabs组件切换SourceView视图
  * - 批量工具栏：批量模式时显示的工具栏
- * 
+ *
  * 注意事项：
  * 1. 需要正确处理批量模式的切换和动画
  * 2. 搜索功能需要与子组件同步
@@ -41,9 +41,28 @@ import { sourceTabs } from './sourceTabs'
 import SourceView from './SourceView'
 import { router } from '@kit.ArkUI'
 
+// 新增预览父组件
+@Entry
 @Component
 @Preview
-export default struct SourceCommon {
+struct SourceCommon_Preview {
+  @State previewCurrentIndex: number = 0
+  @State previewRefreshCount: number = 0 // 新增状态变量
+  @State previewShowDialog: boolean = false // 新增状态变量
+
+  build() {
+    Column() {
+      SourceCommon({
+        currentIndex: this.previewCurrentIndex,
+        refreshCount: this.previewRefreshCount, // 传递必填属性
+        showDialog: this.previewShowDialog // 传递必填属性
+      })
+    }
+  }
+}
+
+@Component
+struct SourceCommon {
   /**
    * 当前索引
    * @type {number}
@@ -51,7 +70,6 @@ export default struct SourceCommon {
    * @prop 使用@Prop装饰器接收父组件传递的数据
    */
   @Prop currentIndex: number
-  
   /**
    * 书源列表
    * @type {dataItem[]}
@@ -63,7 +81,6 @@ export default struct SourceCommon {
     new dataItem("默认显示", 12),
     new dataItem("隐藏书源", 12)
   ]
-  
   /**
    * 显示对话框状态
    * @type {boolean}
@@ -71,14 +88,12 @@ export default struct SourceCommon {
    * @link 使用@Link装饰器实现与父组件的双向绑定
    */
   @Link showDialog: boolean
-  
   /**
    * Tabs控制器
    * @type {TabsController}
    * @description 控制Tabs组件切换的控制器
    */
   sourceController: TabsController = new TabsController();
-  
   /**
    * 阅读索引
    * @type {number}
@@ -87,7 +102,6 @@ export default struct SourceCommon {
    * @state @watch 使用@State装饰器管理状态，@Watch监听变化
    */
   @State @Watch('changeSourceIndex') readIndex: number = 0
-  
   /**
    * 显示更多对话框状态
    * @type {boolean}
@@ -96,7 +110,6 @@ export default struct SourceCommon {
    * @state 使用@State装饰器管理组件内部状态
    */
   @State showMoreDialog: boolean = false
-  
   /**
    * 搜索值
    * @type {string}
@@ -105,7 +118,6 @@ export default struct SourceCommon {
    * @state 使用@State装饰器管理组件内部状态
    */
   @State searchValue: string = ''
-  
   /**
    * 批量模式状态
    * @type {boolean}
@@ -114,7 +126,6 @@ export default struct SourceCommon {
    * @state 使用@State装饰器管理组件内部状态
    */
   @State isBatch: boolean = false
-  
   /**
    * 刷新计数
    * @type {number}
@@ -176,7 +187,7 @@ export default struct SourceCommon {
                 .width(ImageConstants.IMG_WIDTH_24)
                 .height(ImageConstants.IMG_WIDTH_24)
                 .layoutWeight(1) // 占用剩余空间
-                .bindMenu( // 绑定菜单
+                .bindMenu(// 绑定菜单
                   this.showMoreDialog, // 菜单显示状态
                   this.rightDialogBuilder(this.More_Right_Dialog_Data, async (index: number) => {
                     /**
@@ -190,7 +201,8 @@ export default struct SourceCommon {
                         break;
                       case 2: // 书源管理
                         this.showDialog = false // 关闭对话框
-                        router.pushUrl({ // 路由跳转
+                        router.pushUrl({
+                          // 路由跳转
                           url: 'pages/view/Find/BookSource/Index' // 书源管理页面
                         })
                         break;
@@ -281,7 +293,7 @@ export default struct SourceCommon {
     new IconTitleVo($r('app.media.appointment_time'), '按时间排序'), // 时间排序
     new IconTitleVo($r('app.media.icon_no_source_find'), '按评分排序'), // 评分排序
     new IconTitleVo($r('app.media.add_book_shelf'), '书源管理'), // 书源管理
-    new IconTitleVo($r('app.media.icon_rule_batch'), '批量管理'), // 批量管理
+    new IconTitleVo($r('app.media.icon_rule_batch'), '批量管理'),// 批量管理
   ]
 
   /**
@@ -313,3 +325,6 @@ export default struct SourceCommon {
     }
   }
 }
+
+export default SourceCommon
+

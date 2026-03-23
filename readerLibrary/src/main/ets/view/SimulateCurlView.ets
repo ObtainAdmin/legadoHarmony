@@ -18,7 +18,7 @@ export struct SimulateCurlView {
   private isReady = false
   controller: TextController = new TextController();
   private lastTime: number | null = null
-  private animatorResult: AnimatorResult | undefined | null
+  private animatorResult: AnimatorResult | undefined | null = null
   @Consume('screenW') screenW: number;
   @Link currentPageIndex: number;
   @Consume('chapterList') chapterList: ReaderChapterItem[];

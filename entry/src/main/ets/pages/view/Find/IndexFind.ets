@@ -63,7 +63,7 @@ import { showMessage } from '../../../componets/common/promptShow';             
 import { BookSource } from '../../../database/entities/BookSource';                          // 书源实体类
 import { ThemeItem } from '../../../common/model/Theme';                                     // 主题配置模型
 import { ThemeStorageKey } from '../../../common/constants/Theme';                           // 主题存储键常量
-
+import { ConsoleLogUtil } from '../../ConsoleLog'
 /**
  * 发现页面主组件
  * 作为发现模块的核心容器，负责整体布局和业务逻辑处理

@@ -33,9 +33,11 @@ import { ThemeStorageKey } from '../common/constants/Theme'
 import { ThemeItem } from '../common/model/Theme'
 import { WindowAbility } from '../entryability/WindowAbility'
 import BrightnessUtil from '../../common/utils/BrightnessUtil'
+import { ConsoleLogDialog,ConsoleLogUtil} from './ConsoleLog'
 
 @Entry
 @Component
+@Preview
 struct Main {
   /**
    * 应用主页面结构体
@@ -72,6 +74,18 @@ struct Main {
   
   /** 应用主题配置，从应用存储中读取 */
   @StorageProp(ThemeStorageKey.THEME) theme: ThemeItem = {} as ThemeItem
+
+  /** 控制台日志对话框控制器 */
+  consoleDialogController: CustomDialogController = new CustomDialogController({
+    builder: ConsoleLogDialog(),
+    cancel: () => {
+      console.log('Console log dialog closed')
+    },
+    autoCancel: true,
+    alignment: DialogAlignment.Center,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    maskColor: 'rgba(0,0,0,0.5)',
+  })
 
   /**
    * 页面显示时调用的生命周期方法
@@ -175,6 +189,7 @@ struct Main {
    */
   @Builder
   TabBuilder(index = 0, name: string, icon_select: Resource, unselected: Resource) {
+
     Column() {
       Flex({
         direction: FlexDirection.Column,
@@ -237,9 +252,12 @@ struct Main {
             Column() {
               // 根据索引显示对应的功能页面
               if (item.index === 0) {
+
                 BookShelf()  // 书架页面
               } else if (item.index === 1) {
+
                 Find()  // 发现页面
+
               } else if (item.index === 2) {
                 // 订阅源页面，传递当前标签索引
                 Subscription({
@@ -250,7 +268,9 @@ struct Main {
                 MyCenter()  // 我的页面
               }
             }
-          }.tabBar(
+          }.width('100%')
+          .height('100%')
+          .tabBar(
             // 使用TabBuilder构建标签项
             this.TabBuilder(item.index, item.title, item.selectImg, item.unselected)
           )
@@ -265,15 +285,33 @@ struct Main {
       // 监听标签页切换动画开始事件，更新当前选中索引
       .onAnimationStart((index, targetIndex) => {
         this.currentTabIndex = targetIndex
+        ConsoleLogUtil.info(this.nav[targetIndex].title, 'UI')
       })
 
       // 显示阅读引导界面（初始加载时显示）
       if (this.showReadShow) {
         ReadShow({ showReadShow: this.showReadShow }).offset({ y: -150 - this.bottomRectHeight })
       }
+
+      // 控制台日志悬浮按钮（开发调试用）
+      Column() {
+        Text('📋')
+          .fontSize(22)
+      }
+      .width(44)
+      .height(44)
+      .backgroundColor('rgba(0, 0, 0, 0.6)')
+      .borderRadius(22)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
+      .position({ right: 16, bottom: 120 + this.bottomRectHeight })
+      .onClick(() => {
+        this.consoleDialogController.open()
+      })
     }
-    .width("100%")
+    .width('100%')
     .height("100%")
-    .id('main')  // 为截图功能提供组件ID
+    .id('main')
+    .backgroundImageSize(ImageSize.Cover)  // 为截图功能提供组件ID
   }
 }
